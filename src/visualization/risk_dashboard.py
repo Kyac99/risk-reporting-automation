@@ -682,59 +682,169 @@ class RiskDashboard:
              State("var-method-dropdown", "value"),
              State("store-portfolio-filtered", "data")]
         )
-        def update_risk_metrics(n_clicks, confidence_level, time_horizon, var_method, portfolio_json):
-            if n_clicks is None or not portfolio_json or self.returns_data is None:
-                return [html.Div("Cliquez sur 'Calculer' pour afficher les métriques de risque")] * 7
+        def update_risk_analysis(n_clicks, confidence_level, time_horizon, var_method, portfolio_json):
+            if not n_clicks or not portfolio_json or self.returns_data is None:
+                return "", "", "", "", "", "", ""
             
-            # Convertir le portefeuille JSON en DataFrame
-            filtered_portfolio = pd.read_json(portfolio_json, orient='split')
+            # Convertir les données JSON en DataFrame
+            portfolio = pd.read_json(portfolio_json, orient='split')
             
-            # Calculer les métriques de risque
-            # Note: Dans une implémentation réelle, ces calculs seraient effectués
-            # en utilisant les modules de risque que nous avons développés
+            # Ici, il faudrait calculer les métriques de risque réelles
+            # Pour cet exemple, nous allons simuler des résultats
             
-            # Créer des métriques fictives pour la démonstration
-            risk_metrics = {
-                'var': {
-                    'value': 0.05,  # 5% du portefeuille
-                    'method': var_method,
-                    'confidence_level': confidence_level,
-                    'time_horizon': time_horizon
+            # Simuler les métriques VaR
+            var_metrics = html.Div([
+                dbc.Card(
+                    dbc.CardBody([
+                        html.H5(f"VaR ({confidence_level*100:.0f}%, {time_horizon} jour{'s' if time_horizon > 1 else ''})"),
+                        html.H3(f"{np.random.uniform(0.02, 0.05):.2%}"),
+                        html.P(f"Méthode: {var_method.capitalize()}")
+                    ]),
+                    className="mb-2"
+                ),
+                dbc.Card(
+                    dbc.CardBody([
+                        html.H5(f"CVaR"),
+                        html.H3(f"{np.random.uniform(0.03, 0.07):.2%}")
+                    ]),
+                    className="mb-2"
+                )
+            ])
+            
+            # Simuler les métriques de volatilité
+            volatility_metrics = html.Div([
+                dbc.Card(
+                    dbc.CardBody([
+                        html.H5("Volatilité Annualisée"),
+                        html.H3(f"{np.random.uniform(0.10, 0.25):.2%}")
+                    ]),
+                    className="mb-2"
+                ),
+                dbc.Card(
+                    dbc.CardBody([
+                        html.H5("Beta vs Marché"),
+                        html.H3(f"{np.random.uniform(0.8, 1.2):.2f}")
+                    ]),
+                    className="mb-2"
+                )
+            ])
+            
+            # Simuler la matrice de corrélation
+            correlation_fig = px.imshow(
+                np.random.uniform(-1, 1, size=(5, 5)),
+                labels=dict(x="Asset", y="Asset", color="Correlation"),
+                x=['Asset 1', 'Asset 2', 'Asset 3', 'Asset 4', 'Asset 5'],
+                y=['Asset 1', 'Asset 2', 'Asset 3', 'Asset 4', 'Asset 5'],
+                color_continuous_scale='RdBu_r',
+                zmin=-1, zmax=1
+            )
+            correlation_fig.update_layout(
+                title="Matrice de Corrélation",
+                margin=dict(l=20, r=20, t=40, b=20)
+            )
+            
+            # Simuler le graphique de contribution à la VaR
+            contribution_data = pd.DataFrame({
+                'Asset': [f"Asset {i+1}" for i in range(5)],
+                'Contribution': np.random.uniform(0.05, 0.4, size=5)
+            })
+            contribution_data['Contribution'] /= contribution_data['Contribution'].sum()
+            
+            contribution_fig = px.bar(
+                contribution_data,
+                x='Asset',
+                y='Contribution',
+                title="Contribution à la VaR par Actif",
+                text_auto='.1%',
+                labels={'Contribution': 'Contribution à la VaR'}
+            )
+            contribution_fig.update_layout(margin=dict(l=20, r=20, t=40, b=20))
+            
+            # Simuler la table de contribution au risque
+            risk_contribution_table = dash.dash_table.DataTable(
+                id='risk-contribution-datatable',
+                columns=[
+                    {'name': 'Asset', 'id': 'Asset'},
+                    {'name': 'Weight', 'id': 'Weight', 'type': 'numeric', 'format': {'specifier': '.2%'}},
+                    {'name': 'VaR Contribution', 'id': 'VaR_Contribution', 'type': 'numeric', 'format': {'specifier': '.2%'}},
+                    {'name': '% of Total VaR', 'id': 'Pct_Total_VaR', 'type': 'numeric', 'format': {'specifier': '.1%'}}
+                ],
+                data=[
+                    {
+                        'Asset': f"Asset {i+1}",
+                        'Weight': np.random.uniform(0.05, 0.3),
+                        'VaR_Contribution': np.random.uniform(0.001, 0.02),
+                        'Pct_Total_VaR': contribution_data.iloc[i]['Contribution']
+                    }
+                    for i in range(5)
+                ],
+                style_table={'overflowX': 'auto'},
+                style_cell={
+                    'textAlign': 'left',
+                    'padding': '8px'
                 },
-                'cvar': {
-                    'value': 0.07  # 7% du portefeuille
-                },
-                'volatility': {
-                    'daily': 0.01,  # 1% par jour
-                    'annualized': 0.15  # 15% par an
-                },
-                'correlation': {
-                    'matrix': np.random.rand(5, 5)  # Matrice de corrélation fictive
+                style_header={
+                    'backgroundColor': 'rgb(230, 230, 230)',
+                    'fontWeight': 'bold'
                 }
-            }
+            )
             
-            # Mise à jour des métriques de risque du dashboard
-            self.risk_metrics = risk_metrics
+            # Simuler la distribution des rendements
+            returns_data = np.random.normal(0.0005, 0.01, size=1000)
             
-            # Créer les affichages des métriques
-            var_display = self._create_var_metrics_display(risk_metrics)
-            volatility_display = self._create_volatility_metrics_display(risk_metrics)
-            correlation_display = self._create_correlation_metrics_display(risk_metrics)
+            # Créer l'histogramme des rendements
+            returns_fig = px.histogram(
+                returns_data, 
+                nbins=50,
+                title="Distribution des Rendements",
+                labels={'value': 'Rendement', 'count': 'Fréquence'},
+                marginal="box"
+            )
             
-            # Créer les graphiques et tableaux
-            contribution_chart = self._create_var_contribution_chart(filtered_portfolio, risk_metrics)
-            contribution_table = self._create_risk_contribution_table(filtered_portfolio, risk_metrics)
-            distribution_chart = self._create_returns_distribution_chart(self.returns_data)
-            statistics = self._create_returns_statistics(self.returns_data)
+            # Ajouter des lignes pour la VaR et la CVaR
+            var_value = np.percentile(returns_data, (1 - confidence_level) * 100)
+            cvar_value = returns_data[returns_data <= var_value].mean()
+            
+            returns_fig.add_vline(
+                x=var_value, 
+                line_dash="dash", 
+                line_color="red",
+                annotation_text=f"VaR {confidence_level*100:.0f}%",
+                annotation_position="top right"
+            )
+            
+            returns_fig.add_vline(
+                x=cvar_value, 
+                line_dash="dot", 
+                line_color="orange",
+                annotation_text=f"CVaR",
+                annotation_position="top left"
+            )
+            
+            returns_fig.update_layout(margin=dict(l=20, r=20, t=40, b=20))
+            
+            # Calculer les statistiques des rendements
+            returns_stats = html.Div([
+                html.H5("Statistiques des Rendements"),
+                html.Table([
+                    html.Tr([html.Td("Moyenne"), html.Td(f"{np.mean(returns_data):.4f}")]),
+                    html.Tr([html.Td("Médiane"), html.Td(f"{np.median(returns_data):.4f}")]),
+                    html.Tr([html.Td("Écart-type"), html.Td(f"{np.std(returns_data):.4f}")]),
+                    html.Tr([html.Td("Skewness"), html.Td(f"{float(pd.Series(returns_data).skew()):.4f}")]),
+                    html.Tr([html.Td("Kurtosis"), html.Td(f"{float(pd.Series(returns_data).kurtosis()):.4f}")]),
+                    html.Tr([html.Td("Min"), html.Td(f"{np.min(returns_data):.4f}")]),
+                    html.Tr([html.Td("Max"), html.Td(f"{np.max(returns_data):.4f}")]),
+                ], className="table table-striped table-sm")
+            ])
             
             return (
-                var_display,
-                volatility_display,
-                correlation_display,
-                dcc.Graph(figure=contribution_chart),
-                contribution_table,
-                dcc.Graph(figure=distribution_chart),
-                statistics
+                var_metrics,
+                volatility_metrics,
+                dcc.Graph(figure=correlation_fig),
+                dcc.Graph(figure=contribution_fig),
+                risk_contribution_table,
+                dcc.Graph(figure=returns_fig),
+                returns_stats
             )
         
         # Callback pour exécuter les stress-tests
@@ -743,94 +853,287 @@ class RiskDashboard:
              Output("stress-test-summary-chart", "children"),
              Output("stress-test-impact-chart", "children"),
              Output("stress-test-details-table", "children")],
-            [Input("run-stress-test-button", "n_clicks"),
-             Input("create-custom-scenario-button", "n_clicks")],
+            [Input("run-stress-test-button", "n_clicks")],
             [State("scenario-dropdown", "value"),
              State("severity-slider", "value"),
-             State("custom-scenario-name", "value"),
+             State("store-portfolio-filtered", "data")]
+        )
+        def run_stress_test(n_clicks, scenarios, severity, portfolio_json):
+            if not n_clicks or not scenarios or not portfolio_json:
+                return {}, "", "", ""
+            
+            # Convertir les données JSON en DataFrame
+            portfolio = pd.read_json(portfolio_json, orient='split')
+            
+            # Créer une liste pour stocker les résultats des scénarios
+            scenario_results = []
+            
+            # Pour chaque scénario sélectionné
+            for scenario_name in scenarios:
+                # Dans une application réelle, on utiliserait le générateur de scénarios
+                # Pour cet exemple, nous allons simuler les résultats
+                
+                # Simuler l'impact du scénario sur le portefeuille
+                impact_percentage = np.random.uniform(-0.25, -0.05) * severity
+                scenario_results.append({
+                    'name': scenario_name,
+                    'description': f"Simulation du scénario {scenario_name}",
+                    'impact_percentage': impact_percentage,
+                    'impact_value': portfolio['MarketValue'].sum() * impact_percentage
+                })
+            
+            # Stocker les résultats des scénarios pour d'autres callbacks
+            scenarios_json = json.dumps(scenario_results)
+            
+            # Créer le graphique récapitulatif des impacts
+            summary_data = pd.DataFrame(scenario_results)
+            
+            summary_fig = px.bar(
+                summary_data,
+                x='name',
+                y='impact_percentage',
+                title="Impact des Scénarios sur le Portefeuille",
+                text_auto='.2%',
+                labels={
+                    'name': 'Scénario',
+                    'impact_percentage': 'Impact (%)'
+                }
+            )
+            summary_fig.update_traces(marker_color='red')
+            summary_fig.update_layout(margin=dict(l=20, r=20, t=40, b=20))
+            
+            # Simuler l'impact par classe d'actifs
+            asset_classes = portfolio['AssetClass'].unique()
+            impact_by_asset = pd.DataFrame({
+                'AssetClass': asset_classes,
+                'BeforeStress': [portfolio[portfolio['AssetClass'] == cls]['MarketValue'].sum() for cls in asset_classes]
+            })
+            
+            # Simuler les valeurs après stress pour chaque scénario
+            for i, scenario in enumerate(scenario_results):
+                # Simuler des impacts différents selon la classe d'actifs
+                impacts = np.random.uniform(-0.3, -0.01, size=len(asset_classes)) * severity
+                impact_by_asset[f'AfterStress_{i}'] = impact_by_asset['BeforeStress'] * (1 + impacts)
+                impact_by_asset[f'Impact_{i}'] = impact_by_asset[f'AfterStress_{i}'] - impact_by_asset['BeforeStress']
+                impact_by_asset[f'Impact_Pct_{i}'] = impact_by_asset[f'Impact_{i}'] / impact_by_asset['BeforeStress']
+            
+            # Créer le graphique d'impact par classe d'actifs
+            impact_fig = go.Figure()
+            
+            # Ajouter les barres pour les valeurs avant stress
+            impact_fig.add_trace(go.Bar(
+                x=impact_by_asset['AssetClass'],
+                y=impact_by_asset['BeforeStress'],
+                name='Avant Stress',
+                marker_color='blue'
+            ))
+            
+            # Ajouter les barres pour le premier scénario (pour simplifier)
+            if len(scenario_results) > 0:
+                impact_fig.add_trace(go.Bar(
+                    x=impact_by_asset['AssetClass'],
+                    y=impact_by_asset['AfterStress_0'],
+                    name=f'Après {scenario_results[0]["name"]}',
+                    marker_color='red'
+                ))
+            
+            impact_fig.update_layout(
+                barmode='group',
+                title="Impact par Classe d'Actifs",
+                xaxis_title="Classe d'Actifs",
+                yaxis_title="Valeur",
+                margin=dict(l=20, r=20, t=40, b=20)
+            )
+            
+            # Créer la table détaillée des résultats de stress-test
+            details_table = dash.dash_table.DataTable(
+                id='stress-details-datatable',
+                columns=[
+                    {'name': 'Classe d\'Actifs', 'id': 'AssetClass'},
+                    {'name': 'Valeur Initiale', 'id': 'BeforeStress', 'type': 'numeric', 'format': {'specifier': ',.2f'}},
+                ] + [
+                    {'name': f'Après {scenario["name"]}', 'id': f'AfterStress_{i}', 'type': 'numeric', 'format': {'specifier': ',.2f'}}
+                    for i, scenario in enumerate(scenario_results)
+                ] + [
+                    {'name': f'Impact {scenario["name"]} (%)', 'id': f'Impact_Pct_{i}', 'type': 'numeric', 'format': {'specifier': '.2%'}}
+                    for i, scenario in enumerate(scenario_results)
+                ],
+                data=impact_by_asset.to_dict('records'),
+                style_table={'overflowX': 'auto'},
+                style_cell={
+                    'textAlign': 'left',
+                    'padding': '8px'
+                },
+                style_header={
+                    'backgroundColor': 'rgb(230, 230, 230)',
+                    'fontWeight': 'bold'
+                },
+                style_data_conditional=[
+                    {
+                        'if': {
+                            'filter_query': '{{{0}}} < 0'.format(col),
+                            'column_id': col
+                        },
+                        'color': 'red'
+                    }
+                    for col in [f'Impact_Pct_{i}' for i in range(len(scenario_results))]
+                ]
+            )
+            
+            return (
+                scenarios_json,
+                dcc.Graph(figure=summary_fig),
+                dcc.Graph(figure=impact_fig),
+                details_table
+            )
+        
+        # Callback pour créer et exécuter un scénario personnalisé
+        @self.app.callback(
+            [Output("store-selected-scenario", "data", allow_duplicate=True),
+             Output("stress-test-summary-chart", "children", allow_duplicate=True),
+             Output("stress-test-impact-chart", "children", allow_duplicate=True),
+             Output("stress-test-details-table", "children", allow_duplicate=True)],
+            [Input("create-custom-scenario-button", "n_clicks")],
+            [State("custom-scenario-name", "value"),
              State("custom-scenario-description", "value"),
              State("equity-shock", "value"),
              State("interest-rate-shock", "value"),
              State("credit-spread-shock", "value"),
              State("volatility-shock", "value"),
-             State("store-portfolio-filtered", "data")]
+             State("store-portfolio-filtered", "data")],
+            prevent_initial_call=True
         )
-        def run_stress_test(
-            run_clicks, create_clicks, selected_scenarios, severity,
-            custom_name, custom_desc, equity_shock, rate_shock, spread_shock, vol_shock,
-            portfolio_json
-        ):
-            ctx = callback_context
-            if not ctx.triggered or not portfolio_json:
-                return {}, "Sélectionnez des scénarios et cliquez sur 'Exécuter'", "", ""
+        def create_custom_scenario(n_clicks, name, description, equity_shock, 
+                                   interest_rate_shock, credit_spread_shock, 
+                                   volatility_shock, portfolio_json):
+            if not n_clicks or not name or not portfolio_json:
+                return {}, "", "", ""
             
-            button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-            
-            # Convertir le portefeuille JSON en DataFrame
-            filtered_portfolio = pd.read_json(portfolio_json, orient='split')
-            
-            # Liste pour stocker les scénarios à exécuter
-            scenarios_to_run = []
-            
-            if button_id == "run-stress-test-button" and selected_scenarios:
-                # Exécuter les scénarios sélectionnés
-                for scenario_id in selected_scenarios:
-                    # Dans une implémentation réelle, nous utiliserions ScenarioGenerator
-                    # pour obtenir les scénarios prédéfinis avec la sévérité ajustée
-                    scenario = {
-                        'name': scenario_id,
-                        'description': f"Scénario: {scenario_id} (sévérité: {severity}x)",
-                        'severity': severity,
-                        'shocks': {
-                            'equity': -0.15 * severity if scenario_id in ['financial_crisis_2008', 'rate_shock'] else -0.05 * severity,
-                            'interest_rate': 0.01 * severity if scenario_id in ['rate_shock', 'inflation_shock'] else -0.005 * severity,
-                            'credit_spread': 0.005 * severity
-                        }
-                    }
-                    scenarios_to_run.append(scenario)
-            
-            elif button_id == "create-custom-scenario-button" and custom_name:
-                # Créer et exécuter un scénario personnalisé
-                custom_scenario = {
-                    'name': custom_name,
-                    'description': custom_desc or f"Scénario personnalisé: {custom_name}",
-                    'shocks': {}
+            # Créer un scénario personnalisé (dans une application réelle, on utiliserait le générateur de scénarios)
+            custom_scenario = {
+                'name': name,
+                'description': description or f"Scénario personnalisé: {name}",
+                'shocks': {
+                    'equity': float(equity_shock) if equity_shock else -0.15,
+                    'interest_rate': float(interest_rate_shock) if interest_rate_shock else 0.01,
+                    'credit_spread': float(credit_spread_shock) if credit_spread_shock else 0.005,
+                    'volatility': float(volatility_shock) if volatility_shock else 0.10
                 }
-                
-                # Ajouter les chocs définis par l'utilisateur
-                if equity_shock is not None:
-                    custom_scenario['shocks']['equity'] = float(equity_shock)
-                if rate_shock is not None:
-                    custom_scenario['shocks']['interest_rate'] = float(rate_shock)
-                if spread_shock is not None:
-                    custom_scenario['shocks']['credit_spread'] = float(spread_shock)
-                if vol_shock is not None:
-                    custom_scenario['shocks']['volatility'] = float(vol_shock)
-                
-                scenarios_to_run.append(custom_scenario)
+            }
             
-            if not scenarios_to_run:
-                return {}, "Aucun scénario sélectionné", "", ""
+            # Simuler l'impact du scénario sur le portefeuille
+            # Pour cet exemple, nous utilisons un impact aléatoire
+            impact_percentage = np.random.uniform(-0.2, -0.05)
             
-            # Stocker les scénarios
-            scenarios_json = json.dumps(scenarios_to_run)
+            # Convertir les données JSON en DataFrame
+            portfolio = pd.read_json(portfolio_json, orient='split')
             
-            # Simuler l'application des scénarios au portefeuille
-            # Dans une implémentation réelle, nous utiliserions la fonction apply_scenario_to_portfolio
+            # Créer un résultat de scénario
+            scenario_result = [{
+                'name': custom_scenario['name'],
+                'description': custom_scenario['description'],
+                'impact_percentage': impact_percentage,
+                'impact_value': portfolio['MarketValue'].sum() * impact_percentage
+            }]
             
-            # Créer les graphiques et tableaux des résultats
-            summary_chart = self._create_stress_test_summary_chart(filtered_portfolio, scenarios_to_run)
-            impact_chart = self._create_stress_test_impact_chart(filtered_portfolio, scenarios_to_run)
-            details_table = self._create_stress_test_details_table(filtered_portfolio, scenarios_to_run)
+            # Stocker le résultat du scénario
+            scenario_json = json.dumps(scenario_result)
+            
+            # Créer le graphique récapitulatif des impacts
+            summary_data = pd.DataFrame(scenario_result)
+            
+            summary_fig = px.bar(
+                summary_data,
+                x='name',
+                y='impact_percentage',
+                title="Impact du Scénario Personnalisé sur le Portefeuille",
+                text_auto='.2%',
+                labels={
+                    'name': 'Scénario',
+                    'impact_percentage': 'Impact (%)'
+                }
+            )
+            summary_fig.update_traces(marker_color='red')
+            summary_fig.update_layout(margin=dict(l=20, r=20, t=40, b=20))
+            
+            # Simuler l'impact par classe d'actifs (comme dans le callback précédent)
+            asset_classes = portfolio['AssetClass'].unique()
+            impact_by_asset = pd.DataFrame({
+                'AssetClass': asset_classes,
+                'BeforeStress': [portfolio[portfolio['AssetClass'] == cls]['MarketValue'].sum() for cls in asset_classes]
+            })
+            
+            # Simuler des impacts différents selon la classe d'actifs
+            impacts = np.random.uniform(-0.3, -0.01, size=len(asset_classes))
+            impact_by_asset['AfterStress'] = impact_by_asset['BeforeStress'] * (1 + impacts)
+            impact_by_asset['Impact'] = impact_by_asset['AfterStress'] - impact_by_asset['BeforeStress']
+            impact_by_asset['Impact_Pct'] = impact_by_asset['Impact'] / impact_by_asset['BeforeStress']
+            
+            # Créer le graphique d'impact par classe d'actifs
+            impact_fig = go.Figure()
+            
+            # Ajouter les barres pour les valeurs avant stress
+            impact_fig.add_trace(go.Bar(
+                x=impact_by_asset['AssetClass'],
+                y=impact_by_asset['BeforeStress'],
+                name='Avant Stress',
+                marker_color='blue'
+            ))
+            
+            # Ajouter les barres pour le scénario personnalisé
+            impact_fig.add_trace(go.Bar(
+                x=impact_by_asset['AssetClass'],
+                y=impact_by_asset['AfterStress'],
+                name=f'Après {custom_scenario["name"]}',
+                marker_color='red'
+            ))
+            
+            impact_fig.update_layout(
+                barmode='group',
+                title="Impact par Classe d'Actifs",
+                xaxis_title="Classe d'Actifs",
+                yaxis_title="Valeur",
+                margin=dict(l=20, r=20, t=40, b=20)
+            )
+            
+            # Créer la table détaillée des résultats de stress-test
+            details_table = dash.dash_table.DataTable(
+                id='stress-details-datatable-custom',
+                columns=[
+                    {'name': 'Classe d\'Actifs', 'id': 'AssetClass'},
+                    {'name': 'Valeur Initiale', 'id': 'BeforeStress', 'type': 'numeric', 'format': {'specifier': ',.2f'}},
+                    {'name': f'Après {custom_scenario["name"]}', 'id': 'AfterStress', 'type': 'numeric', 'format': {'specifier': ',.2f'}},
+                    {'name': 'Impact (%)', 'id': 'Impact_Pct', 'type': 'numeric', 'format': {'specifier': '.2%'}}
+                ],
+                data=impact_by_asset.to_dict('records'),
+                style_table={'overflowX': 'auto'},
+                style_cell={
+                    'textAlign': 'left',
+                    'padding': '8px'
+                },
+                style_header={
+                    'backgroundColor': 'rgb(230, 230, 230)',
+                    'fontWeight': 'bold'
+                },
+                style_data_conditional=[
+                    {
+                        'if': {
+                            'filter_query': '{Impact_Pct} < 0',
+                            'column_id': 'Impact_Pct'
+                        },
+                        'color': 'red'
+                    }
+                ]
+            )
             
             return (
-                scenarios_json,
-                dcc.Graph(figure=summary_chart),
-                dcc.Graph(figure=impact_chart),
+                scenario_json,
+                dcc.Graph(figure=summary_fig),
+                dcc.Graph(figure=impact_fig),
                 details_table
             )
         
-        # Callback pour afficher les performances
+        # Callback pour l'onglet Performance
         @self.app.callback(
             [Output("store-selected-timeframe", "data"),
              Output("cumulative-returns-chart", "children"),
@@ -844,42 +1147,166 @@ class RiskDashboard:
              State("date-range-picker", "end_date"),
              State("store-portfolio-filtered", "data")]
         )
-        def update_performance_view(n_clicks, timeframe, start_date, end_date, portfolio_json):
-            if n_clicks is None or not portfolio_json or self.returns_data is None:
-                return {}, "Sélectionnez une période et cliquez sur 'Appliquer'", "", "", "", ""
+        def update_performance_analysis(n_clicks, timeframe, start_date, end_date, portfolio_json):
+            if self.market_data is None:
+                return {}, "", "", "", "", ""
             
-            # Convertir le portefeuille JSON en DataFrame
-            filtered_portfolio = pd.read_json(portfolio_json, orient='split')
+            # Dans une application réelle, on filtrerait les données selon la période
+            # Pour cet exemple, nous allons générer des données simulées
             
-            # Convertir les dates sélectionnées en objets datetime
-            start_date = pd.to_datetime(start_date)
-            end_date = pd.to_datetime(end_date)
+            # Définir la période d'analyse
+            if timeframe == '1M':
+                days = 30
+            elif timeframe == '3M':
+                days = 90
+            elif timeframe == '6M':
+                days = 180
+            elif timeframe == 'YTD':
+                days = (datetime.now() - datetime(datetime.now().year, 1, 1)).days
+            elif timeframe == '1Y':
+                days = 365
+            elif timeframe == '3Y':
+                days = 365 * 3
+            else:  # 'ALL' ou période personnalisée
+                if start_date and end_date:
+                    days = (pd.to_datetime(end_date) - pd.to_datetime(start_date)).days
+                else:
+                    days = 365  # Par défaut, 1 an
             
-            # Stocker les informations de période
-            timeframe_info = {
+            # Générer des dates
+            dates = pd.date_range(end=datetime.now(), periods=days)
+            
+            # Simuler les rendements cumulés
+            np.random.seed(42)  # Pour la reproductibilité
+            daily_returns = np.random.normal(0.0005, 0.01, size=days)
+            cumulative_returns = (1 + daily_returns).cumprod() - 1
+            
+            # Calculer le drawdown
+            rolling_max = np.maximum.accumulate(np.insert(cumulative_returns, 0, 0))
+            drawdown = (cumulative_returns + 1) / rolling_max - 1
+            
+            # Créer un DataFrame pour les performances
+            performance_data = pd.DataFrame({
+                'Date': dates,
+                'CumulativeReturn': cumulative_returns,
+                'Drawdown': drawdown
+            })
+            
+            # Créer le graphique des rendements cumulés
+            cumulative_fig = px.line(
+                performance_data,
+                x='Date',
+                y='CumulativeReturn',
+                title="Rendements Cumulés",
+                labels={
+                    'Date': 'Date',
+                    'CumulativeReturn': 'Rendement Cumulé'
+                }
+            )
+            cumulative_fig.update_traces(line=dict(color='blue'))
+            cumulative_fig.update_layout(margin=dict(l=20, r=20, t=40, b=20))
+            
+            # Créer le graphique de drawdown
+            drawdown_fig = px.area(
+                performance_data,
+                x='Date',
+                y='Drawdown',
+                title="Drawdown",
+                labels={
+                    'Date': 'Date',
+                    'Drawdown': 'Drawdown'
+                }
+            )
+            drawdown_fig.update_traces(line=dict(color='red'), fillcolor='rgba(255, 0, 0, 0.3)')
+            drawdown_fig.update_layout(margin=dict(l=20, r=20, t=40, b=20))
+            
+            # Créer les statistiques de performance
+            performance_stats = html.Div([
+                html.H5("Statistiques de Performance"),
+                html.Table([
+                    html.Tr([html.Td("Rendement Cumulé"), html.Td(f"{cumulative_returns[-1]:.2%}")]),
+                    html.Tr([html.Td("Rendement Annualisé"), html.Td(f"{((1 + cumulative_returns[-1]) ** (365/days) - 1):.2%}")]),
+                    html.Tr([html.Td("Volatilité Annualisée"), html.Td(f"{np.std(daily_returns) * np.sqrt(252):.2%}")]),
+                    html.Tr([html.Td("Ratio de Sharpe"), html.Td(f"{((np.mean(daily_returns) * 252) / (np.std(daily_returns) * np.sqrt(252))):.2f}")]),
+                    html.Tr([html.Td("Drawdown Maximum"), html.Td(f"{np.min(drawdown):.2%}")]),
+                    html.Tr([html.Td("VaR (95%, 1 jour)"), html.Td(f"{np.percentile(daily_returns, 5):.2%}")]),
+                ], className="table table-striped table-sm")
+            ])
+            
+            # Simuler la performance par classe d'actifs
+            if portfolio_json:
+                portfolio = pd.read_json(portfolio_json, orient='split')
+                asset_classes = portfolio['AssetClass'].unique()
+            else:
+                asset_classes = ['Actions', 'Obligations', 'Cash', 'Immobilier']
+                
+            asset_performance = pd.DataFrame({
+                'AssetClass': asset_classes,
+                'Return': np.random.uniform(-0.15, 0.25, size=len(asset_classes))
+            })
+            
+            # Créer le graphique de performance par classe d'actifs
+            asset_perf_fig = px.bar(
+                asset_performance,
+                x='AssetClass',
+                y='Return',
+                title="Performance par Classe d'Actifs",
+                text_auto='.2%',
+                labels={
+                    'AssetClass': 'Classe d\'Actifs',
+                    'Return': 'Rendement'
+                }
+            )
+            asset_perf_fig.update_traces(marker_color=['green' if r > 0 else 'red' for r in asset_performance['Return']])
+            asset_perf_fig.update_layout(margin=dict(l=20, r=20, t=40, b=20))
+            
+            # Simuler les meilleurs et pires performers
+            if portfolio_json:
+                portfolio = pd.read_json(portfolio_json, orient='split')
+                assets = portfolio['Security'].tolist()
+            else:
+                assets = [f"Asset {i+1}" for i in range(10)]
+                
+            performers = pd.DataFrame({
+                'Asset': assets,
+                'Return': np.random.uniform(-0.3, 0.4, size=len(assets))
+            }).sort_values('Return')
+            
+            # Sélectionner les 3 meilleurs et les 3 pires
+            top_performers = performers.tail(3)
+            bottom_performers = performers.head(3)
+            top_bottom = pd.concat([bottom_performers, top_performers])
+            
+            # Créer le graphique des meilleurs/pires performers
+            performers_fig = px.bar(
+                top_bottom,
+                x='Asset',
+                y='Return',
+                title="Meilleurs et Pires Performers",
+                text_auto='.2%',
+                labels={
+                    'Asset': 'Actif',
+                    'Return': 'Rendement'
+                }
+            )
+            performers_fig.update_traces(marker_color=['green' if r > 0 else 'red' for r in top_bottom['Return']])
+            performers_fig.update_layout(margin=dict(l=20, r=20, t=40, b=20))
+            
+            # Stocker la période sélectionnée
+            timeframe_json = json.dumps({
                 'timeframe': timeframe,
-                'start_date': start_date.strftime('%Y-%m-%d'),
-                'end_date': end_date.strftime('%Y-%m-%d')
-            }
-            timeframe_json = json.dumps(timeframe_info)
-            
-            # Filtrer les données de rendements pour la période sélectionnée
-            # Dans une implémentation réelle, nous utiliserions les données réelles
-            
-            # Créer les graphiques et statistiques de performance
-            cumulative_returns_chart = self._create_cumulative_returns_chart(self.returns_data, timeframe_info)
-            drawdown_chart = self._create_drawdown_chart(self.returns_data, timeframe_info)
-            performance_stats = self._create_performance_statistics(self.returns_data, timeframe_info)
-            asset_performance_chart = self._create_asset_performance_chart(self.returns_data, filtered_portfolio, timeframe_info)
-            top_bottom_chart = self._create_top_bottom_performers_chart(self.returns_data, filtered_portfolio, timeframe_info)
+                'start_date': start_date,
+                'end_date': end_date,
+                'days': days
+            })
             
             return (
                 timeframe_json,
-                dcc.Graph(figure=cumulative_returns_chart),
-                dcc.Graph(figure=drawdown_chart),
+                dcc.Graph(figure=cumulative_fig),
+                dcc.Graph(figure=drawdown_fig),
                 performance_stats,
-                dcc.Graph(figure=asset_performance_chart),
-                dcc.Graph(figure=top_bottom_chart)
+                dcc.Graph(figure=asset_perf_fig),
+                dcc.Graph(figure=performers_fig)
             )
     
     def _create_allocation_chart(self, portfolio_data, category_column, title):
@@ -1029,801 +1456,6 @@ class RiskDashboard:
         
         return table
     
-    def _create_var_metrics_display(self, risk_metrics):
-        """
-        Créer l'affichage des métriques VaR.
-        
-        Args:
-            risk_metrics: Dictionnaire des métriques de risque
-            
-        Returns:
-            Composant HTML avec les métriques VaR
-        """
-        if not risk_metrics or 'var' not in risk_metrics:
-            return html.Div("Métriques VaR non disponibles")
-        
-        var_value = risk_metrics['var']['value']
-        cvar_value = risk_metrics['cvar']['value'] if 'cvar' in risk_metrics else None
-        confidence_level = risk_metrics['var'].get('confidence_level', 0.95)
-        time_horizon = risk_metrics['var'].get('time_horizon', 1)
-        method = risk_metrics['var'].get('method', 'historical')
-        
-        # Mapper les noms de méthode
-        method_names = {
-            'historical': 'Historique',
-            'parametric': 'Paramétrique',
-            'monte_carlo': 'Monte Carlo'
-        }
-        method_name = method_names.get(method, method)
-        
-        # Créer l'affichage
-        var_display = html.Div([
-            dbc.Card(
-                dbc.CardBody([
-                    html.H5(f"Value at Risk ({confidence_level*100:.0f}%, {time_horizon} jour{'s' if time_horizon > 1 else ''})"),
-                    html.H3(f"{var_value*100:.2f}%"),
-                    html.P(f"Méthode: {method_name}")
-                ]),
-                className="mb-2"
-            ),
-            dbc.Card(
-                dbc.CardBody([
-                    html.H5(f"Conditional VaR ({confidence_level*100:.0f}%, {time_horizon} jour{'s' if time_horizon > 1 else ''})"),
-                    html.H3(f"{cvar_value*100:.2f}%" if cvar_value is not None else "N/A")
-                ]),
-                className="mb-2"
-            )
-        ])
-        
-        return var_display
-    
-    def _create_volatility_metrics_display(self, risk_metrics):
-        """
-        Créer l'affichage des métriques de volatilité.
-        
-        Args:
-            risk_metrics: Dictionnaire des métriques de risque
-            
-        Returns:
-            Composant HTML avec les métriques de volatilité
-        """
-        if not risk_metrics or 'volatility' not in risk_metrics:
-            return html.Div("Métriques de volatilité non disponibles")
-        
-        daily_vol = risk_metrics['volatility'].get('daily', None)
-        annual_vol = risk_metrics['volatility'].get('annualized', None)
-        
-        vol_display = html.Div([
-            dbc.Card(
-                dbc.CardBody([
-                    html.H5("Volatilité"),
-                    html.Div([
-                        html.P(f"Journalière: {daily_vol*100:.2f}%" if daily_vol is not None else "Journalière: N/A"),
-                        html.P(f"Annualisée: {annual_vol*100:.2f}%" if annual_vol is not None else "Annualisée: N/A")
-                    ])
-                ]),
-                className="mb-2"
-            )
-        ])
-        
-        return vol_display
-    
-    def _create_correlation_metrics_display(self, risk_metrics):
-        """
-        Créer l'affichage de la matrice de corrélation.
-        
-        Args:
-            risk_metrics: Dictionnaire des métriques de risque
-            
-        Returns:
-            Composant HTML avec la matrice de corrélation
-        """
-        if not risk_metrics or 'correlation' not in risk_metrics or 'matrix' not in risk_metrics['correlation']:
-            return html.Div("Matrice de corrélation non disponible")
-        
-        corr_matrix = risk_metrics['correlation']['matrix']
-        
-        # Créer une heatmap pour la matrice de corrélation
-        fig = px.imshow(
-            corr_matrix,
-            labels=dict(x="Actif", y="Actif", color="Corrélation"),
-            x=['Actif ' + str(i+1) for i in range(corr_matrix.shape[1])],
-            y=['Actif ' + str(i+1) for i in range(corr_matrix.shape[0])],
-            title="Matrice de Corrélation"
-        )
-        
-        fig.update_layout(
-            margin=dict(l=20, r=20, t=40, b=20),
-            height=400
-        )
-        
-        return dcc.Graph(figure=fig)
-    
-    def _create_var_contribution_chart(self, portfolio_data, risk_metrics):
-        """
-        Créer un graphique de contribution à la VaR.
-        
-        Args:
-            portfolio_data: Données du portefeuille
-            risk_metrics: Dictionnaire des métriques de risque
-            
-        Returns:
-            Figure Plotly
-        """
-        # Simuler des contributions à la VaR pour la démonstration
-        if portfolio_data.empty:
-            return go.Figure()
-        
-        # Utiliser le poids du portefeuille comme proxy pour la contribution à la VaR
-        if 'Weight' in portfolio_data.columns:
-            contrib_data = portfolio_data[['Security', 'Weight']].copy()
-        else:
-            # Si les poids ne sont pas disponibles, simuler des contributions
-            contrib_data = portfolio_data[['Security']].copy()
-            contrib_data['Weight'] = np.random.random(size=len(contrib_data))
-            contrib_data['Weight'] = contrib_data['Weight'] / contrib_data['Weight'].sum()
-        
-        # Renommer la colonne pour plus de clarté
-        contrib_data = contrib_data.rename(columns={'Weight': 'Contribution'})
-        
-        # Trier par contribution
-        contrib_data = contrib_data.sort_values('Contribution', ascending=False)
-        
-        # Créer le graphique
-        fig = px.bar(
-            contrib_data,
-            x='Security',
-            y='Contribution',
-            title="Contribution à la VaR par Position",
-            labels={'Security': 'Position', 'Contribution': 'Contribution à la VaR'}
-        )
-        
-        fig.update_layout(
-            xaxis_tickangle=-45,
-            margin=dict(l=20, r=20, t=40, b=80)
-        )
-        
-        return fig
-    
-    def _create_risk_contribution_table(self, portfolio_data, risk_metrics):
-        """
-        Créer une table de contribution au risque.
-        
-        Args:
-            portfolio_data: Données du portefeuille
-            risk_metrics: Dictionnaire des métriques de risque
-            
-        Returns:
-            Composant HTML avec la table
-        """
-        if portfolio_data.empty:
-            return html.Div("Aucune donnée disponible")
-        
-        # Simuler des contributions au risque pour la démonstration
-        risk_data = portfolio_data[['Security', 'Ticker', 'AssetClass']].copy()
-        
-        # Ajouter des colonnes de risque simulées
-        risk_data['Volatilité'] = np.random.uniform(0.05, 0.30, size=len(risk_data))
-        risk_data['ContributionVaR'] = np.random.uniform(0.01, 0.10, size=len(risk_data))
-        risk_data['ContributionVaR%'] = risk_data['ContributionVaR'] / risk_data['ContributionVaR'].sum() * 100
-        risk_data['Beta'] = np.random.uniform(0.5, 1.5, size=len(risk_data))
-        
-        # Créer la table
-        table = dash.dash_table.DataTable(
-            id='risk-contribution-datatable',
-            columns=[
-                {'name': 'Titre', 'id': 'Security'},
-                {'name': 'Ticker', 'id': 'Ticker'},
-                {'name': 'Classe d\'actif', 'id': 'AssetClass'},
-                {'name': 'Volatilité', 'id': 'Volatilité', 'type': 'numeric', 'format': {'specifier': '.2%'}},
-                {'name': 'Contribution VaR', 'id': 'ContributionVaR', 'type': 'numeric', 'format': {'specifier': '.2%'}},
-                {'name': 'Contribution VaR %', 'id': 'ContributionVaR%', 'type': 'numeric', 'format': {'specifier': '.2f'}},
-                {'name': 'Beta', 'id': 'Beta', 'type': 'numeric', 'format': {'specifier': '.2f'}}
-            ],
-            data=risk_data.to_dict('records'),
-            sort_action='native',
-            filter_action='native',
-            page_size=10,
-            style_table={'overflowX': 'auto'},
-            style_cell={
-                'textAlign': 'left',
-                'padding': '8px',
-                'minWidth': '100px',
-                'width': '150px',
-                'maxWidth': '200px',
-                'overflow': 'hidden',
-                'textOverflow': 'ellipsis'
-            },
-            style_header={
-                'backgroundColor': 'rgb(230, 230, 230)',
-                'fontWeight': 'bold'
-            },
-            style_data_conditional=[
-                {
-                    'if': {'row_index': 'odd'},
-                    'backgroundColor': 'rgb(248, 248, 248)'
-                }
-            ]
-        )
-        
-        return table
-    
-    def _create_returns_distribution_chart(self, returns_data):
-        """
-        Créer un graphique de distribution des rendements.
-        
-        Args:
-            returns_data: DataFrame des rendements
-            
-        Returns:
-            Figure Plotly
-        """
-        if returns_data is None or returns_data.empty:
-            return go.Figure()
-        
-        # Simuler des rendements pour la démonstration si nécessaire
-        if isinstance(returns_data, pd.DataFrame) and 'portfolio' not in returns_data.columns:
-            # Simuler des rendements de portefeuille
-            portfolio_returns = np.random.normal(0.0002, 0.01, size=len(returns_data))
-        else:
-            portfolio_returns = returns_data['portfolio'].values
-        
-        # Créer l'histogramme
-        fig = go.Figure()
-        
-        fig.add_trace(go.Histogram(
-            x=portfolio_returns,
-            nbinsx=50,
-            name='Rendements',
-            marker_color='blue',
-            opacity=0.7
-        ))
-        
-        # Ajouter une courbe de distribution normale
-        x_vals = np.linspace(min(portfolio_returns), max(portfolio_returns), 100)
-        y_vals = stats.norm.pdf(x_vals, np.mean(portfolio_returns), np.std(portfolio_returns))
-        
-        fig.add_trace(go.Scatter(
-            x=x_vals,
-            y=y_vals,
-            mode='lines',
-            name='Distribution normale',
-            line=dict(color='red')
-        ))
-        
-        # Personnaliser le graphique
-        fig.update_layout(
-            title="Distribution des Rendements du Portefeuille",
-            xaxis_title="Rendement",
-            yaxis_title="Fréquence",
-            bargap=0.01,
-            bargroupgap=0.05,
-            margin=dict(l=20, r=20, t=40, b=20)
-        )
-        
-        return fig
-    
-    def _create_returns_statistics(self, returns_data):
-        """
-        Créer un résumé des statistiques de rendements.
-        
-        Args:
-            returns_data: DataFrame des rendements
-            
-        Returns:
-            Composant HTML avec les statistiques
-        """
-        if returns_data is None or returns_data.empty:
-            return html.Div("Statistiques de rendements non disponibles")
-        
-        # Simuler des rendements pour la démonstration si nécessaire
-        if isinstance(returns_data, pd.DataFrame) and 'portfolio' not in returns_data.columns:
-            # Simuler des rendements de portefeuille
-            portfolio_returns = np.random.normal(0.0002, 0.01, size=len(returns_data))
-        else:
-            portfolio_returns = returns_data['portfolio'].values
-        
-        # Calculer les statistiques
-        mean_return = np.mean(portfolio_returns)
-        std_return = np.std(portfolio_returns)
-        skewness = stats.skew(portfolio_returns)
-        kurtosis = stats.kurtosis(portfolio_returns)
-        sharpe = mean_return / std_return if std_return > 0 else 0
-        
-        # Créer l'affichage
-        stats_display = html.Div([
-            dbc.Card(
-                dbc.CardBody([
-                    html.H5("Statistiques des Rendements"),
-                    html.Table([
-                        html.Tr([html.Td("Rendement moyen:"), html.Td(f"{mean_return*100:.4f}%")]),
-                        html.Tr([html.Td("Écart-type:"), html.Td(f"{std_return*100:.4f}%")]),
-                        html.Tr([html.Td("Asymétrie:"), html.Td(f"{skewness:.4f}")]),
-                        html.Tr([html.Td("Kurtosis:"), html.Td(f"{kurtosis:.4f}")]),
-                        html.Tr([html.Td("Ratio de Sharpe:"), html.Td(f"{sharpe:.4f}")])
-                    ], style={'width': '100%'})
-                ]),
-                className="mb-2"
-            )
-        ])
-        
-        return stats_display
-    
-    def _create_stress_test_summary_chart(self, portfolio_data, scenarios):
-        """
-        Créer un graphique de résumé des stress-tests.
-        
-        Args:
-            portfolio_data: Données du portefeuille
-            scenarios: Liste des scénarios
-            
-        Returns:
-            Figure Plotly
-        """
-        if portfolio_data.empty or not scenarios:
-            return go.Figure()
-        
-        # Simuler les impacts des scénarios sur le portefeuille
-        scenario_names = [s['name'] for s in scenarios]
-        
-        # Simuler l'impact en pourcentage
-        impacts = []
-        for scenario in scenarios:
-            # Simuler un impact basé sur les chocs définis dans le scénario
-            shocks = scenario['shocks']
-            equity_shock = shocks.get('equity', 0)
-            rate_shock = shocks.get('interest_rate', 0)
-            
-            # Simuler un impact plus négatif pour les scénarios avec des chocs d'actions négatifs
-            impact = equity_shock * 0.6 + rate_shock * 0.3 + np.random.uniform(-0.02, 0.01)
-            impacts.append(impact)
-        
-        # Créer le graphique
-        fig = go.Figure()
-        
-        fig.add_trace(go.Bar(
-            x=scenario_names,
-            y=impacts,
-            marker_color=['red' if i < 0 else 'green' for i in impacts],
-            text=[f"{i*100:.2f}%" for i in impacts],
-            textposition='auto'
-        ))
-        
-        fig.update_layout(
-            title="Impact des Scénarios sur le Portefeuille",
-            xaxis_title="Scénario",
-            yaxis_title="Impact (%)",
-            yaxis_tickformat='.2%',
-            margin=dict(l=20, r=20, t=40, b=20)
-        )
-        
-        return fig
-    
-    def _create_stress_test_impact_chart(self, portfolio_data, scenarios):
-        """
-        Créer un graphique d'impact des stress-tests par classe d'actifs.
-        
-        Args:
-            portfolio_data: Données du portefeuille
-            scenarios: Liste des scénarios
-            
-        Returns:
-            Figure Plotly
-        """
-        if portfolio_data.empty or not scenarios:
-            return go.Figure()
-        
-        # Obtenir les classes d'actifs uniques
-        asset_classes = sorted(portfolio_data['AssetClass'].unique())
-        
-        # Simuler les impacts par classe d'actifs pour chaque scénario
-        scenario_names = [s['name'] for s in scenarios]
-        impacts_by_asset = {}
-        
-        for asset_class in asset_classes:
-            impacts = []
-            for scenario in scenarios:
-                # Simuler un impact basé sur les chocs définis dans le scénario
-                shocks = scenario['shocks']
-                equity_shock = shocks.get('equity', 0)
-                rate_shock = shocks.get('interest_rate', 0)
-                
-                # Ajuster l'impact en fonction de la classe d'actifs
-                if asset_class == 'Equity':
-                    impact = equity_shock * 1.2 + np.random.uniform(-0.02, 0.02)
-                elif asset_class in ['Bond', 'Fixed Income', 'Sovereign']:
-                    impact = rate_shock * 1.5 + np.random.uniform(-0.01, 0.01)
-                else:
-                    impact = equity_shock * 0.5 + rate_shock * 0.3 + np.random.uniform(-0.015, 0.015)
-                
-                impacts.append(impact)
-            
-            impacts_by_asset[asset_class] = impacts
-        
-        # Créer le graphique
-        fig = go.Figure()
-        
-        for asset_class, impacts in impacts_by_asset.items():
-            fig.add_trace(go.Bar(
-                name=asset_class,
-                x=scenario_names,
-                y=impacts,
-                text=[f"{i*100:.2f}%" for i in impacts],
-                textposition='auto'
-            ))
-        
-        fig.update_layout(
-            title="Impact des Scénarios par Classe d'Actifs",
-            xaxis_title="Scénario",
-            yaxis_title="Impact (%)",
-            yaxis_tickformat='.2%',
-            barmode='group',
-            margin=dict(l=20, r=20, t=40, b=80)
-        )
-        
-        return fig
-    
-    def _create_stress_test_details_table(self, portfolio_data, scenarios):
-        """
-        Créer une table détaillée des résultats de stress-test.
-        
-        Args:
-            portfolio_data: Données du portefeuille
-            scenarios: Liste des scénarios
-            
-        Returns:
-            Composant HTML avec la table
-        """
-        if portfolio_data.empty or not scenarios:
-            return html.Div("Aucun résultat disponible")
-        
-        # Créer un DataFrame pour les résultats
-        results = []
-        
-        for scenario in scenarios:
-            scenario_name = scenario['name']
-            shocks = scenario['shocks']
-            
-            for _, row in portfolio_data.iterrows():
-                security = row['Security']
-                ticker = row['Ticker']
-                asset_class = row['AssetClass']
-                market_value = row['MarketValue'] if 'MarketValue' in row else 0
-                
-                # Simuler un impact basé sur la classe d'actifs et les chocs
-                equity_shock = shocks.get('equity', 0)
-                rate_shock = shocks.get('interest_rate', 0)
-                
-                if asset_class == 'Equity':
-                    impact_pct = equity_shock * 1.2 + np.random.uniform(-0.02, 0.02)
-                elif asset_class in ['Bond', 'Fixed Income', 'Sovereign']:
-                    impact_pct = rate_shock * 1.5 + np.random.uniform(-0.01, 0.01)
-                else:
-                    impact_pct = equity_shock * 0.5 + rate_shock * 0.3 + np.random.uniform(-0.015, 0.015)
-                
-                impact_value = market_value * impact_pct
-                
-                results.append({
-                    'Scénario': scenario_name,
-                    'Security': security,
-                    'Ticker': ticker,
-                    'AssetClass': asset_class,
-                    'MarketValue': market_value,
-                    'ImpactPct': impact_pct,
-                    'ImpactValue': impact_value
-                })
-        
-        results_df = pd.DataFrame(results)
-        
-        # Créer la table
-        table = dash.dash_table.DataTable(
-            id='stress-test-details-datatable',
-            columns=[
-                {'name': 'Scénario', 'id': 'Scénario'},
-                {'name': 'Titre', 'id': 'Security'},
-                {'name': 'Ticker', 'id': 'Ticker'},
-                {'name': 'Classe d\'actif', 'id': 'AssetClass'},
-                {'name': 'Valeur de marché', 'id': 'MarketValue', 'type': 'numeric', 'format': {'specifier': ',.2f'}},
-                {'name': 'Impact %', 'id': 'ImpactPct', 'type': 'numeric', 'format': {'specifier': '.2%'}},
-                {'name': 'Impact valeur', 'id': 'ImpactValue', 'type': 'numeric', 'format': {'specifier': ',.2f'}}
-            ],
-            data=results_df.to_dict('records'),
-            sort_action='native',
-            filter_action='native',
-            page_size=15,
-            style_table={'overflowX': 'auto'},
-            style_cell={
-                'textAlign': 'left',
-                'padding': '8px',
-                'minWidth': '100px',
-                'width': '150px',
-                'maxWidth': '200px',
-                'overflow': 'hidden',
-                'textOverflow': 'ellipsis'
-            },
-            style_header={
-                'backgroundColor': 'rgb(230, 230, 230)',
-                'fontWeight': 'bold'
-            },
-            style_data_conditional=[
-                {
-                    'if': {'row_index': 'odd'},
-                    'backgroundColor': 'rgb(248, 248, 248)'
-                },
-                {
-                    'if': {
-                        'filter_query': '{ImpactPct} < 0',
-                        'column_id': 'ImpactPct'
-                    },
-                    'color': 'red'
-                },
-                {
-                    'if': {
-                        'filter_query': '{ImpactValue} < 0',
-                        'column_id': 'ImpactValue'
-                    },
-                    'color': 'red'
-                }
-            ],
-            export_format='csv'
-        )
-        
-        return table
-    
-    def _create_cumulative_returns_chart(self, returns_data, timeframe_info):
-        """
-        Créer un graphique des rendements cumulatifs.
-        
-        Args:
-            returns_data: DataFrame des rendements
-            timeframe_info: Informations sur la période
-            
-        Returns:
-            Figure Plotly
-        """
-        if returns_data is None or returns_data.empty:
-            return go.Figure()
-        
-        # Simuler des rendements pour la démonstration
-        dates = pd.date_range(end=datetime.now(), periods=252, freq='B')
-        
-        # Simuler des rendements pour quelques indices/benchmarks
-        np.random.seed(42)  # Pour la reproductibilité
-        returns = pd.DataFrame({
-            'Portfolio': np.random.normal(0.0005, 0.010, len(dates)),
-            'S&P 500': np.random.normal(0.0004, 0.011, len(dates)),
-            'MSCI World': np.random.normal(0.0003, 0.009, len(dates))
-        }, index=dates)
-        
-        # Calculer les rendements cumulatifs
-        cumulative_returns = (1 + returns).cumprod() - 1
-        
-        # Créer le graphique
-        fig = go.Figure()
-        
-        for col in cumulative_returns.columns:
-            fig.add_trace(go.Scatter(
-                x=cumulative_returns.index,
-                y=cumulative_returns[col],
-                mode='lines',
-                name=col
-            ))
-        
-        fig.update_layout(
-            title="Rendements Cumulatifs",
-            xaxis_title="Date",
-            yaxis_title="Rendement Cumulatif",
-            yaxis_tickformat='.2%',
-            legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
-            margin=dict(l=20, r=20, t=40, b=20)
-        )
-        
-        return fig
-    
-    def _create_drawdown_chart(self, returns_data, timeframe_info):
-        """
-        Créer un graphique des drawdowns.
-        
-        Args:
-            returns_data: DataFrame des rendements
-            timeframe_info: Informations sur la période
-            
-        Returns:
-            Figure Plotly
-        """
-        if returns_data is None or returns_data.empty:
-            return go.Figure()
-        
-        # Simuler des rendements pour la démonstration
-        dates = pd.date_range(end=datetime.now(), periods=252, freq='B')
-        
-        # Simuler des rendements pour le portefeuille
-        np.random.seed(42)  # Pour la reproductibilité
-        returns = pd.Series(np.random.normal(0.0005, 0.010, len(dates)), index=dates)
-        
-        # Calculer les rendements cumulatifs
-        cumulative_returns = (1 + returns).cumprod()
-        
-        # Calculer les drawdowns
-        running_max = cumulative_returns.cummax()
-        drawdowns = (cumulative_returns / running_max) - 1
-        
-        # Créer le graphique
-        fig = go.Figure()
-        
-        fig.add_trace(go.Scatter(
-            x=drawdowns.index,
-            y=drawdowns,
-            mode='lines',
-            name='Drawdown',
-            fill='tozeroy',
-            fillcolor='rgba(255, 0, 0, 0.3)',
-            line=dict(color='red')
-        ))
-        
-        fig.update_layout(
-            title="Drawdowns",
-            xaxis_title="Date",
-            yaxis_title="Drawdown",
-            yaxis_tickformat='.2%',
-            margin=dict(l=20, r=20, t=40, b=20)
-        )
-        
-        return fig
-    
-    def _create_performance_statistics(self, returns_data, timeframe_info):
-        """
-        Créer un résumé des statistiques de performance.
-        
-        Args:
-            returns_data: DataFrame des rendements
-            timeframe_info: Informations sur la période
-            
-        Returns:
-            Composant HTML avec les statistiques
-        """
-        if returns_data is None or returns_data.empty:
-            return html.Div("Statistiques de performance non disponibles")
-        
-        # Simuler des rendements pour la démonstration
-        np.random.seed(42)  # Pour la reproductibilité
-        returns = np.random.normal(0.0005, 0.010, 252)
-        
-        # Calculer les statistiques de performance
-        total_return = (1 + returns).prod() - 1
-        annualized_return = (1 + total_return) ** (252 / len(returns)) - 1
-        volatility = np.std(returns) * np.sqrt(252)
-        sharpe_ratio = annualized_return / volatility if volatility > 0 else 0
-        
-        # Calculer le maximum drawdown
-        cumulative_returns = (1 + np.array(returns)).cumprod()
-        running_max = np.maximum.accumulate(cumulative_returns)
-        drawdowns = cumulative_returns / running_max - 1
-        max_drawdown = np.min(drawdowns)
-        
-        # Créer l'affichage
-        stats_display = html.Div([
-            dbc.Card(
-                dbc.CardBody([
-                    html.H5("Statistiques de Performance"),
-                    html.Table([
-                        html.Tr([html.Td("Rendement total:"), html.Td(f"{total_return*100:.2f}%")]),
-                        html.Tr([html.Td("Rendement annualisé:"), html.Td(f"{annualized_return*100:.2f}%")]),
-                        html.Tr([html.Td("Volatilité annualisée:"), html.Td(f"{volatility*100:.2f}%")]),
-                        html.Tr([html.Td("Ratio de Sharpe:"), html.Td(f"{sharpe_ratio:.2f}")]),
-                        html.Tr([html.Td("Drawdown maximum:"), html.Td(f"{max_drawdown*100:.2f}%")])
-                    ], style={'width': '100%'})
-                ]),
-                className="mb-2"
-            )
-        ])
-        
-        return stats_display
-    
-    def _create_asset_performance_chart(self, returns_data, portfolio_data, timeframe_info):
-        """
-        Créer un graphique de performance par classe d'actifs.
-        
-        Args:
-            returns_data: DataFrame des rendements
-            portfolio_data: Données du portefeuille
-            timeframe_info: Informations sur la période
-            
-        Returns:
-            Figure Plotly
-        """
-        if portfolio_data.empty:
-            return go.Figure()
-        
-        # Obtenir les classes d'actifs uniques
-        asset_classes = sorted(portfolio_data['AssetClass'].unique())
-        
-        # Simuler les rendements par classe d'actifs
-        np.random.seed(42)  # Pour la reproductibilité
-        performance = {}
-        
-        for asset_class in asset_classes:
-            # Simuler un rendement pour chaque classe d'actifs
-            performance[asset_class] = np.random.uniform(-0.10, 0.25)
-        
-        # Créer le graphique
-        fig = go.Figure()
-        
-        fig.add_trace(go.Bar(
-            x=list(performance.keys()),
-            y=list(performance.values()),
-            marker_color=['red' if v < 0 else 'green' for v in performance.values()],
-            text=[f"{v*100:.2f}%" for v in performance.values()],
-            textposition='auto'
-        ))
-        
-        fig.update_layout(
-            title="Performance par Classe d'Actifs",
-            xaxis_title="Classe d'actif",
-            yaxis_title="Performance",
-            yaxis_tickformat='.2%',
-            margin=dict(l=20, r=20, t=40, b=20)
-        )
-        
-        return fig
-    
-    def _create_top_bottom_performers_chart(self, returns_data, portfolio_data, timeframe_info):
-        """
-        Créer un graphique des meilleurs et pires performers.
-        
-        Args:
-            returns_data: DataFrame des rendements
-            portfolio_data: Données du portefeuille
-            timeframe_info: Informations sur la période
-            
-        Returns:
-            Figure Plotly
-        """
-        if portfolio_data.empty:
-            return go.Figure()
-        
-        # Simuler les performances individuelles pour la démonstration
-        performance = {}
-        
-        for _, row in portfolio_data.iterrows():
-            security = row['Security']
-            # Simuler une performance
-            performance[security] = np.random.uniform(-0.20, 0.40)
-        
-        # Trier les performances
-        sorted_performance = sorted(performance.items(), key=lambda x: x[1])
-        
-        # Prendre les 5 meilleurs et les 5 pires performers
-        bottom_5 = sorted_performance[:5]
-        top_5 = sorted_performance[-5:]
-        
-        # Créer les données pour le graphique
-        securities = [item[0] for item in bottom_5] + [item[0] for item in top_5]
-        values = [item[1] for item in bottom_5] + [item[1] for item in top_5]
-        colors = ['red'] * 5 + ['green'] * 5
-        
-        # Créer le graphique
-        fig = go.Figure()
-        
-        fig.add_trace(go.Bar(
-            x=securities,
-            y=values,
-            marker_color=colors,
-            text=[f"{v*100:.2f}%" for v in values],
-            textposition='auto'
-        ))
-        
-        fig.update_layout(
-            title="Top 5 / Bottom 5 Performers",
-            xaxis_title="Titre",
-            yaxis_title="Performance",
-            yaxis_tickformat='.2%',
-            xaxis_tickangle=-45,
-            margin=dict(l=20, r=20, t=40, b=80)
-        )
-        
-        return fig
-    
     def run_server(self, debug=False, host='0.0.0.0', port=8050):
         """
         Lancer le serveur Dash.
@@ -1838,23 +1470,29 @@ class RiskDashboard:
 
 # Exemple d'utilisation
 if __name__ == "__main__":
-    # Créer des données de démonstration
-    portfolio_data = pd.DataFrame({
+    # Configurer le logging
+    logging.basicConfig(level=logging.INFO)
+    
+    # Créer un portefeuille d'exemple
+    portfolio_data = {
         'Security': ['Apple Inc.', 'Microsoft Corp.', 'Amazon.com Inc.', 'Alphabet Inc.', 'Meta Platforms Inc.'],
         'Ticker': ['AAPL', 'MSFT', 'AMZN', 'GOOG', 'META'],
         'Quantity': [100, 50, 20, 15, 40],
         'AssetClass': ['Equity', 'Equity', 'Equity', 'Equity', 'Equity'],
         'Sector': ['Technology', 'Technology', 'Consumer Discretionary', 'Communication Services', 'Communication Services'],
         'Currency': ['USD', 'USD', 'USD', 'USD', 'USD'],
-        'Price': [150.0, 300.0, 3000.0, 2500.0, 300.0],
-        'MarketValue': [15000.0, 15000.0, 60000.0, 37500.0, 12000.0],
-        'Weight': [0.108, 0.108, 0.432, 0.27, 0.082]
-    })
+        'Price': [150.0, 250.0, 3000.0, 2500.0, 300.0],
+        'MarketValue': [15000.0, 12500.0, 60000.0, 37500.0, 12000.0],
+        'Weight': [0.11, 0.09, 0.44, 0.27, 0.09]
+    }
     
-    # Créer une instance du dashboard
+    # Créer un DataFrame
+    portfolio = pd.DataFrame(portfolio_data)
+    
+    # Créer le dashboard
     dashboard = RiskDashboard(
-        title="Dashboard de Risque - Démo",
-        portfolio_data=portfolio_data
+        title="Dashboard de Risque et Performance",
+        portfolio_data=portfolio
     )
     
     # Lancer le serveur
