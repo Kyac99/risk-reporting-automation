@@ -1,0 +1,31 @@
+Security,Ticker,Quantity,AssetClass,Sector,Currency,Price,MarketValue,Weight
+Apple Inc.,AAPL,500,Equity,Technology,USD,180.75,90375.00,0.1152
+Microsoft Corp.,MSFT,250,Equity,Technology,USD,415.50,103875.00,0.1325
+Amazon.com Inc.,AMZN,180,Equity,Consumer Discretionary,USD,178.75,32175.00,0.0411
+Alphabet Inc.,GOOGL,200,Equity,Communication Services,USD,150.25,30050.00,0.0383
+Meta Platforms Inc.,META,150,Equity,Communication Services,USD,485.00,72750.00,0.0928
+JPMorgan Chase & Co.,JPM,300,Equity,Financials,USD,197.50,59250.00,0.0756
+Tesla Inc.,TSLA,120,Equity,Consumer Discretionary,USD,172.00,20640.00,0.0263
+Visa Inc.,V,250,Equity,Financials,USD,275.50,68875.00,0.0878
+Johnson & Johnson,JNJ,180,Equity,Healthcare,USD,153.00,27540.00,0.0351
+Berkshire Hathaway Inc.,BRK-B,120,Equity,Financials,USD,412.00,49440.00,0.0630
+Procter & Gamble Co.,PG,200,Equity,Consumer Staples,USD,162.50,32500.00,0.0415
+UnitedHealth Group Inc.,UNH,70,Equity,Healthcare,USD,490.00,34300.00,0.0438
+Exxon Mobil Corp.,XOM,300,Equity,Energy,USD,114.50,34350.00,0.0438
+Walmart Inc.,WMT,250,Equity,Consumer Staples,USD,60.50,15125.00,0.0193
+Coca-Cola Co.,KO,400,Equity,Consumer Staples,USD,61.50,24600.00,0.0314
+U.S. Treasury 10Y Bond,US10Y,100,Fixed Income,Government,USD,980.00,98000.00,0.1250
+U.S. Treasury 5Y Bond,US5Y,150,Fixed Income,Government,USD,990.00,148500.00,0.1893
+U.S. Treasury 2Y Bond,US2Y,50,Fixed Income,Government,USD,995.00,49750.00,0.0634
+Corporate Bond ETF,LQD,150,Fixed Income,Corporate,USD,108.50,16275.00,0.0208
+High Yield Bond ETF,HYG,100,Fixed Income,Corporate,USD,77.50,7750.00,0.0099
+Gold ETF,GLD,50,Commodity,Precious Metals,USD,185.00,9250.00,0.0118
+Silver ETF,SLV,100,Commodity,Precious Metals,USD,22.75,2275.00,0.0029
+Real Estate ETF,VNQ,100,Real Estate,REIT,USD,85.00,8500.00,0.0108
+Euro Cash,EUR,10000,Cash,Cash,EUR,1.08,10800.00,0.0138
+US Dollar Cash,USD,5000,Cash,Cash,USD,1.00,5000.00,0.0064
+Japan Nikkei ETF,EWJ,50,Equity,International,JPY,65.50,3275.00,0.0042
+UK FTSE ETF,EWU,75,Equity,International,GBP,35.25,2643.75,0.0034
+Emerging Markets ETF,EEM,100,Equity,International,USD,41.50,4150.00,0.0053
+China ETF,MCHI,80,Equity,International,CNY,47.75,3820.00,0.0049
+India ETF,INDA,70,Equity,International,INR,46.25,3237.50,0.0041
